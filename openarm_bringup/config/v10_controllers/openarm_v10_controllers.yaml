@@ -20,50 +20,11 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    forward_position_controller:
-      type: forward_command_controller/ForwardCommandController
-
-    forward_velocity_controller:
-      type: forward_command_controller/ForwardCommandController
-
     joint_trajectory_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
     gripper_controller:
       type: position_controllers/GripperActionController
-
-forward_position_controller:
-  ros__parameters:
-    joints:
-      - openarm_joint1
-      - openarm_joint2
-      - openarm_joint3
-      - openarm_joint4
-      - openarm_joint5
-      - openarm_joint6
-      - openarm_joint7
-    interface_name: position
-    command_interfaces:
-      - position
-    state_interfaces:
-      - position
-
-
-forward_velocity_controller:
-  ros__parameters:
-    joints:
-      - openarm_joint1
-      - openarm_joint2
-      - openarm_joint3
-      - openarm_joint4
-      - openarm_joint5
-      - openarm_joint6
-      - openarm_joint7
-    interface_name: velocity
-    command_interfaces:
-      - velocity
-    state_interfaces:
-      - velocity
 
 joint_trajectory_controller:
   ros__parameters:
