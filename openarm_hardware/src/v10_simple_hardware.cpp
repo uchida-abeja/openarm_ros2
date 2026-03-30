@@ -138,7 +138,8 @@ hardware_interface::CallbackReturn OpenArm_v10HW::on_init(
 
   // Initialize arm motors with V10 defaults
   openarm_->init_arm_motors(DEFAULT_MOTOR_TYPES, DEFAULT_SEND_CAN_IDS,
-                            DEFAULT_RECV_CAN_IDS);
+                            DEFAULT_RECV_CAN_IDS,
+                            {openarm::damiao_motor::ControlMode::MIT});
 
   // Initialize gripper if enabled
   if (hand_) {
@@ -209,13 +210,30 @@ OpenArm_v10HW::export_command_interfaces() {
 hardware_interface::CallbackReturn OpenArm_v10HW::on_activate(
     const rclcpp_lifecycle::State& /*previous_state*/) {
   RCLCPP_INFO(rclcpp::get_logger("OpenArm_v10HW"), "Activating OpenArm V10...");
-  openarm_->set_callback_mode_all(openarm::damiao_motor::CallbackMode::STATE);
+
+  // Match the vendor example sequence more closely for real motors:
+  // ignore callbacks while enabling, then switch to state mode and sync
+  // command buffers to the live state before controllers start writing.
+  openarm_->set_callback_mode_all(openarm::damiao_motor::CallbackMode::IGNORE);
   openarm_->enable_all();
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  openarm_->recv_all();
+  openarm_->recv_all(2000);
+  openarm_->set_callback_mode_all(openarm::damiao_motor::CallbackMode::STATE);
+  openarm_->refresh_all();
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  openarm_->recv_all(2000);
+  read(rclcpp::Time{}, rclcpp::Duration::from_seconds(0.0));
 
-  // Return to zero position
-  return_to_zero();
+  for (size_t i = 0; i < pos_states_.size(); ++i) {
+    pos_commands_[i] = pos_states_[i];
+    vel_commands_[i] = 0.0;
+    tau_commands_[i] = 0.0;
+  }
+
+  RCLCPP_INFO(
+      rclcpp::get_logger("OpenArm_v10HW"),
+      "Synced command buffers to current state. First arm joint position: %.4f",
+      pos_states_.empty() ? 0.0 : pos_states_[0]);
 
   RCLCPP_INFO(rclcpp::get_logger("OpenArm_v10HW"), "OpenArm V10 activated");
   return CallbackReturn::SUCCESS;
