@@ -46,6 +46,7 @@ joint_trajectory_controller:
     action_monitor_rate: 50.0 # Defaults to 20
 
     allow_partial_joints_goal: false # Defaults to false
+    interpolate_from_desired_state: true # Interpolate from last commanded state, not measured (prevents droop at trajectory start)
     constraints:
       stopped_velocity_tolerance: 0.05 # Defaults to 0.01
       goal_time: 3.0 # Relaxed for real hardware tuning phase
